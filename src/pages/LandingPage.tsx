@@ -258,7 +258,7 @@ const LandingPage: React.FC = () => {
                 <nav style={styles.nav}>
                     <div style={styles.logo}>
                         <Pill size={24} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
-                        PIL Extractor
+                        PharmaScan
                     </div>
                     {!isMobile && (
                         <ul style={styles.navUl}>
@@ -293,7 +293,7 @@ const LandingPage: React.FC = () => {
                 <section style={styles.hero}>
                     <div style={styles.heroOverlay}></div>
                     <div style={styles.heroContent}>
-                        <h1 style={styles.h1}>PIL Extractor App</h1>
+                        <h1 style={styles.h1}>PharmaScan</h1>
                         <p style={styles.heroDescription}>
                             Simplifying drug information extraction from Patient Information Leaflets (PILs).
                         </p>
@@ -369,7 +369,7 @@ const LandingPage: React.FC = () => {
             </main>
 
             <footer style={styles.footer}>
-                <p>&copy; {year} PIL Extractor App. All rights reserved.</p>
+                <p>&copy; {year} PharmaScan. All rights reserved.</p>
             </footer>
         </div>
     );

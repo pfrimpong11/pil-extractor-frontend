@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios, { AxiosError } from "axios";
+import axios, {AxiosError} from "axios";
 import jsPDF from "jspdf";
 import { Upload, FileText, Download, Pill, AlertTriangle, ShieldAlert, Package, Calendar, Target, Droplet, CheckCircle, Shuffle, CheckSquare } from "lucide-react";
 import Background from '../assets/images/background.jpg';
@@ -55,16 +55,24 @@ const HomePage: React.FC = () => {
       );
 
       // Parse the JSON response
-      const parsedData: DrugInfo = JSON.parse(response.data);
-      setDrugInfo(parsedData);
-      setError(null);
+      if (response.data && response.data.trim() !== "") {
+        const parsedData: DrugInfo = JSON.parse(response.data);
+        setDrugInfo(parsedData);
+        setError(null);
+      } else {
+        console.log(response.data);
+        setError("An error occurred. Please try again.");
+        setDrugInfo(null);  // Optional: clear the current drug info if needed
+      }
+
     } catch (err) {
       const axiosError = err as AxiosError<ErrorResponse>;
       const errorMessage =
         axiosError.response?.data?.error ||
         axiosError.message ||
         "Unknown error occurred";
-      setError("Error uploading file: " + errorMessage);
+        console.log(errorMessage);
+      setError("Error uploading file. Please try again.");
     }
   };
 
@@ -204,7 +212,7 @@ const HomePage: React.FC = () => {
       transition: "background-color 0.3s",
     },
     uploadText: {
-      color: "#3182CE",
+      color: "#000",
       marginTop: "1rem",
     },
     previewContainer: {
@@ -226,7 +234,7 @@ const HomePage: React.FC = () => {
     },
     fileName: {
       marginTop: "0.5rem",
-      color: "#3182CE",
+      color: "#000",
     },
     button: {
       backgroundColor: "#000",
@@ -282,7 +290,7 @@ const HomePage: React.FC = () => {
       <header style={styles.header}>
       <div style={styles.heroOverlay}></div>
       <div style={styles.heroContent}>
-        <h1 style={styles.title}>PIL Extractor App</h1>
+        <h1 style={styles.title}>PharmaScan</h1>
         <p style={styles.subtitle}>
           Upload your PIL and extract key drug information
         </p>
