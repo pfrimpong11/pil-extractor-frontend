@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import axios, {AxiosError} from "axios";
 import jsPDF from "jspdf";
-import { Upload, FileText, Download, Pill, AlertTriangle, ShieldAlert, Package, Calendar, Target, Droplet, CheckCircle, Shuffle, CheckSquare } from "lucide-react";
+import { Upload, FileText, Download, Pill, AlertTriangle, ShieldAlert, Package, Calendar, Target, Droplet, CheckCircle, Shuffle, CheckSquare, Loader2 } from "lucide-react";
 import Background from '../assets/images/background.jpg';
+import '../styles/HomePage.css';
 
 interface ErrorResponse {
   error: string;
@@ -24,6 +25,8 @@ const HomePage: React.FC = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [drugInfo, setDrugInfo] = useState<DrugInfo | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -39,6 +42,8 @@ const HomePage: React.FC = () => {
       setError("Please select a file to upload.");
       return;
     }
+
+    setIsSubmitting(true);
 
     const formData = new FormData();
     formData.append("file", uploadedFile);
@@ -73,68 +78,79 @@ const HomePage: React.FC = () => {
         "Unknown error occurred";
         console.log(errorMessage);
       setError("Error uploading file. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDownload = () => {
     if (!drugInfo) return;
 
-    const doc = new jsPDF();
-    let y = 20;
-    const pageHeight = doc.internal.pageSize.height;
-    const margin = 20;
-    const lineHeight = 7;
+    setIsDownloading(true);
 
-    // Function to add a new page
-    const addPage = () => {
-      doc.addPage();
-      y = 20;
-    };
+    try {
+      const doc = new jsPDF();
+      let y = 20;
+      const pageHeight = doc.internal.pageSize.height;
+      const margin = 20;
+      const lineHeight = 7;
 
-    // Function to check and add a new page if needed
-    const checkNewPage = (height: number) => {
-      if (y + height > pageHeight - margin) {
-        addPage();
-      }
-    };
+      // Function to add a new page
+      const addPage = () => {
+        doc.addPage();
+        y = 20;
+      };
 
-    // Function to write text with word wrap
-    const writeText = (text: string, fontSize: number, isBold: boolean = false) => {
-      doc.setFontSize(fontSize);
-      doc.setFont(isBold ? 'bold' : 'normal');
-      
-      const lines = doc.splitTextToSize(text, 180) as string[];
-      checkNewPage(lines.length * lineHeight);
-      
-      lines.forEach((line: string) => {
-        doc.text(line, 15, y);
-        y += lineHeight;
-      });
-      
-      y += 5; // Add some space after each text block
-    };
+      // Function to check and add a new page if needed
+      const checkNewPage = (height: number) => {
+        if (y + height > pageHeight - margin) {
+          addPage();
+        }
+      };
 
-    // Title
-    writeText("Drug Information Report", 22, true);
-    y += 10;
-
-    Object.entries(drugInfo).forEach(([key, value]) => {
-      // Section title
-      writeText(`${key}:`, 16, true);
-
-      // Section content
-      if (Array.isArray(value)) {
-        value.forEach((item) => {
-          writeText(`• ${item}`, 12);
+      // Function to write text with word wrap
+      const writeText = (text: string, fontSize: number, isBold: boolean = false) => {
+        doc.setFontSize(fontSize);
+        doc.setFont(isBold ? 'bold' : 'normal');
+        
+        const lines = doc.splitTextToSize(text, 180) as string[];
+        checkNewPage(lines.length * lineHeight);
+        
+        lines.forEach((line: string) => {
+          doc.text(line, 15, y);
+          y += lineHeight;
         });
-      } else {
-        writeText(value, 12);
-      }
+        
+        y += 5; // Add some space after each text block
+      };
 
-      y += 10; // Add extra space between sections
-    });
+      // Title
+      writeText("Drug Information Report", 22, true);
+      y += 10;
 
-    doc.save("drug_information_report.pdf");
+      Object.entries(drugInfo).forEach(([key, value]) => {
+        // Section title
+        writeText(`${key}:`, 16, true);
+
+        // Section content
+        if (Array.isArray(value)) {
+          value.forEach((item) => {
+            writeText(`• ${item}`, 12);
+          });
+        } else {
+          writeText(value, 12);
+        }
+
+        y += 10; // Add extra space between sections
+      });
+
+      doc.save("drug_information_report.pdf");
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    setError("Error generating PDF. Please try again.");
+  } finally {
+    setIsDownloading(false);
+  }
   };
 
   const styles = {
@@ -347,9 +363,13 @@ const HomePage: React.FC = () => {
 
           {/* Display the error message if it exists */}
           {error && <p style={{ color: "red" }}>{error}</p>}
-          <button onClick={handleSubmit} style={styles.button}>
-            <Upload size={18} style={{ marginRight: "0.5rem" }} />
-            Submit
+          <button onClick={handleSubmit} style={styles.button} disabled={isSubmitting}>
+            {isSubmitting ? (
+              <Loader2 size={18} className="spinner" style={{ marginRight: "0.5rem" }} />
+            ) : (
+              <Upload size={18} style={{ marginRight: "0.5rem" }} />
+            )}
+            {isSubmitting ? "Submitting..." : "Submit"}
           </button>
         </div>
 
@@ -430,9 +450,13 @@ const HomePage: React.FC = () => {
               </div>
             ))}
           </div>
-          <button onClick={handleDownload} style={styles.button}>
-            <Download size={18} style={{ marginRight: "0.5rem" }} />
-            Download Results as PDF
+          <button onClick={handleDownload} style={styles.button} disabled={isDownloading || !drugInfo}>
+            {isDownloading ? (
+              <Loader2 size={18} className="spinner" style={{ marginRight: "0.5rem" }} />
+            ) : (
+              <Download size={18} style={{ marginRight: "0.5rem" }} />
+            )}
+            {isDownloading ? "Generating PDF..." : "Download Results as PDF"}
           </button>
         </div>
       </div>
